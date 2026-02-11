@@ -4,6 +4,7 @@ use crate::error::OuError;
 use crate::fs::FileSystem;
 use crate::git::executor::GitExecutor;
 use crate::git::runner::GitRunner;
+use crate::multiplexer;
 use crate::symlink;
 
 pub fn run<E: GitExecutor>(
@@ -59,13 +60,38 @@ pub fn run<E: GitExecutor>(
 
     // Apply carried stash in the new worktree
     if carried {
-        // stash is shared across worktrees, pop via -C <new_worktree>
         git.stash_pop()?;
     }
 
     let mut msg = format!("Created worktree '{}' at {}", args.name, wt_path.display());
     if args.lock {
         msg.push_str(" [locked]");
+    }
+
+    // Auto-open in WezTerm if configured
+    let auto_open = config
+        .wezterm
+        .as_ref()
+        .is_some_and(|c| c.auto_open);
+
+    if auto_open {
+        if let Some(mux) = multiplexer::detect_multiplexer() {
+            let title = config
+                .wezterm
+                .as_ref()
+                .and_then(|c| c.tab_title_template.as_ref())
+                .map(|tmpl| tmpl.replace("{name}", &args.name))
+                .unwrap_or_else(|| args.name.clone());
+
+            match mux.open_tab(&wt_path, Some(&title)) {
+                Ok(pane_id) => {
+                    msg.push_str(&format!(" (opened in {} pane {})", mux.name(), pane_id));
+                }
+                Err(e) => {
+                    eprintln!("Warning: failed to open tab: {e}");
+                }
+            }
+        }
     }
 
     Ok(msg)
