@@ -1,9 +1,24 @@
+//! `ou open` -- Interactively select a worktree and open it in a terminal multiplexer tab.
+//!
+//! Presents a numbered list of non-bare worktrees, reads the user's selection from stdin,
+//! and opens the chosen worktree in a new WezTerm tab (if detected).
+//! Falls back to printing the selection if no multiplexer is available.
+//!
+//! Side effects: opens a new terminal tab via `wezterm cli spawn`.
+//! Requires: interactive stdin (not suitable for piped input).
+//! Related: `add --auto-open` opens a tab automatically at creation time.
+
 use crate::config::Config;
 use crate::error::OuError;
 use crate::git::executor::GitExecutor;
 use crate::git::runner::GitRunner;
 use crate::multiplexer;
 
+/// Execute the `open` command.
+///
+/// Flow: list worktrees -> filter bare -> present numbered selection via stderr
+/// -> read choice from stdin -> detect multiplexer -> open tab with configured title.
+/// Falls back to printing the selection if no multiplexer is available.
 pub fn run<E: GitExecutor>(
     git: &GitRunner<E>,
     config: &Config,
@@ -29,7 +44,7 @@ pub fn run<E: GitExecutor>(
         return Err(OuError::Git("no worktrees found".to_string()));
     }
 
-    // Simple selection: print numbered list and let user choose
+    // Print selection UI to stderr so stdout remains clean for programmatic use
     eprintln!("Select a worktree:");
     for (i, (branch, path)) in items.iter().enumerate() {
         eprintln!("  {}: {} ({})", i + 1, branch, path);

@@ -1,3 +1,11 @@
+//! `ou list` -- Display all git worktrees with branch, commit hash, path, and status flags.
+//!
+//! In normal mode, outputs a colored, aligned table (branch=green, hash=yellow,
+//! path=dim, flags=red). In `--quiet` mode, outputs only worktree paths for piping.
+//!
+//! Side effects: none (read-only).
+//! Returns: `FormatResult::Table` (normal) or `FormatResult::Plain` (quiet).
+
 use console::Style;
 
 use crate::cli::ListArgs;
@@ -6,6 +14,10 @@ use crate::git::executor::GitExecutor;
 use crate::git::runner::GitRunner;
 use crate::result::FormatResult;
 
+/// Execute the `list` command.
+///
+/// Queries `git worktree list --porcelain`, parses the output into `Worktree` structs,
+/// and formats them as either a colored table or plain path list depending on `--quiet`.
 pub fn run<E: GitExecutor>(
     git: &GitRunner<E>,
     args: &ListArgs,
@@ -28,6 +40,7 @@ pub fn run<E: GitExecutor>(
     let mut rows = Vec::new();
     for wt in &worktrees {
         let branch = wt.branch.as_deref().unwrap_or("(detached)");
+        // Truncate commit hash to 7 characters (standard git short hash)
         let short_head = if wt.head.len() >= 7 {
             &wt.head[..7]
         } else {
