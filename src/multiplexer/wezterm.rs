@@ -17,10 +17,8 @@ impl Multiplexer for WeztermMultiplexer {
 
     fn open_tab(&self, cwd: &Path, title: Option<&str>) -> Result<String, OuError> {
         let cwd_str = cwd.to_string_lossy();
-        let mut args = vec!["cli", "spawn", "--cwd", &cwd_str];
+        let args = vec!["cli", "spawn", "--cwd", &cwd_str];
 
-        // WezTerm doesn't have a direct --title flag for spawn,
-        // but we can set it via the pane title after creation
         let output = Command::new("wezterm")
             .args(&args)
             .output()

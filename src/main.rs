@@ -56,7 +56,10 @@ fn main() -> Result<()> {
             println!("{msg}");
         }
         Commands::Open => {
-            eprintln!("ou open: not yet implemented (Phase 4/5)");
+            let repo_root = git.get_toplevel()?;
+            let config = Config::load(&repo_root, &fs)?;
+            let msg = commands::open::run(&git, &config)?;
+            println!("{msg}");
         }
         Commands::Dashboard => {
             eprintln!("ou dashboard: not yet implemented (Phase 6)");
