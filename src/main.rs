@@ -62,7 +62,7 @@ fn main() -> Result<()> {
             println!("{msg}");
         }
         Commands::Dashboard => {
-            eprintln!("ou dashboard: not yet implemented (Phase 6)");
+            tui::run_dashboard(&git)?;
         }
     }
 
