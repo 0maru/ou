@@ -1,3 +1,13 @@
+//! `ou sync` -- Re-synchronize symlinks and submodules across existing worktrees.
+//!
+//! Recreates symlinks (as defined in config) from a source directory to target worktrees.
+//! By default syncs only the current worktree; with `--all`, syncs all non-bare worktrees.
+//! The source defaults to the repo root but can be overridden with `--source <branch>`.
+//!
+//! Side effects: creates symlinks in target worktree directories; optionally runs
+//! `git submodule update --init --recursive`.
+//! Related: `add` creates symlinks at worktree creation time; `sync` re-applies them later.
+
 use crate::cli::SyncArgs;
 use crate::config::Config;
 use crate::error::OuError;
@@ -6,6 +16,11 @@ use crate::git::executor::GitExecutor;
 use crate::git::runner::GitRunner;
 use crate::symlink;
 
+/// Execute the `sync` command.
+///
+/// Resolves the source directory (repo root or a specific worktree via `--source`),
+/// determines target worktrees (`--all` or current only), then creates symlinks and
+/// optionally initializes submodules for each target.
 pub fn run<E: GitExecutor>(
     git: &GitRunner<E>,
     fs: &dyn FileSystem,
@@ -16,6 +31,8 @@ pub fn run<E: GitExecutor>(
     let worktrees = git.worktree_list()?;
     let symlink_patterns = config.all_symlinks();
 
+    // Resolve source: if --source is specified, find the worktree for that branch;
+    // otherwise default to the repository root.
     let source_dir = if let Some(ref source) = args.source {
         let wt = worktrees
             .iter()
@@ -26,6 +43,8 @@ pub fn run<E: GitExecutor>(
         repo_root.clone()
     };
 
+    // Determine sync targets: --all syncs every non-bare worktree (excluding source),
+    // otherwise sync only the worktree matching the current working directory.
     let targets: Vec<_> = if args.all {
         worktrees
             .iter()

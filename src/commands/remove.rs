@@ -1,8 +1,26 @@
+//! `ou remove <branch>...` -- Remove one or more worktrees and their associated branches.
+//!
+//! Supports batch removal with partial-failure semantics: successfully removed worktrees
+//! are reported, and errors for individual branches are collected separately.
+//!
+//! Force levels:
+//! - No flag: refuses if uncommitted changes or locked
+//! - `-f`: allows removal with uncommitted changes (passes --force to git)
+//! - `-ff`: additionally unlocks locked worktrees before removal
+//!
+//! Side effects: removes worktree directories from disk, deletes git branches.
+//! Related: `clean` automates candidate selection based on merge/gone status.
+
 use crate::cli::RemoveArgs;
 use crate::error::OuError;
 use crate::git::executor::GitExecutor;
 use crate::git::runner::GitRunner;
 
+/// Execute the `remove` command.
+///
+/// Iterates over the requested branch names, resolves each to a worktree, validates
+/// lock/bare status against the force level, removes the worktree, then attempts to
+/// delete the branch. Returns a combined success/error report.
 pub fn run<E: GitExecutor>(
     git: &GitRunner<E>,
     args: &RemoveArgs,
@@ -30,7 +48,8 @@ pub fn run<E: GitExecutor>(
             continue;
         }
 
-        // Check lock status
+        // Force level check: -f (force=1) is not enough to remove a locked worktree.
+        // Only -ff (force>=2) will unlock and proceed.
         if wt.is_locked && args.force < 2 {
             let reason = wt.lock_reason.as_deref().unwrap_or("no reason given");
             errors.push(format!(
@@ -54,7 +73,8 @@ pub fn run<E: GitExecutor>(
             }
         }
 
-        // Delete branch
+        // Branch deletion is best-effort: if the worktree was removed successfully
+        // but branch deletion fails, warn but don't treat as a fatal error.
         match git.branch_delete(branch_name, force) {
             Ok(()) => {}
             Err(e) => {

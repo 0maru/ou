@@ -1,3 +1,11 @@
+//! `ou init` -- Initialize the `.ou/` configuration directory in a git repository.
+//!
+//! Creates `.ou/settings.toml` with sensible defaults (detects the default branch
+//! name from the remote) and a `.gitignore` to exclude `settings.local.toml`.
+//!
+//! Side effects: creates `.ou/settings.toml` and `.ou/.gitignore` on disk.
+//! Idempotency: returns an error if already initialized.
+
 use std::path::Path;
 
 use crate::config::{self, Config};
@@ -6,6 +14,11 @@ use crate::fs::FileSystem;
 use crate::git::executor::GitExecutor;
 use crate::git::runner::GitRunner;
 
+/// Execute the `init` command.
+///
+/// Locates the repository root, checks that `.ou/settings.toml` does not already
+/// exist, detects the default branch name, then writes the config template and
+/// `.gitignore`.
 pub fn run<E: GitExecutor>(
     git: &GitRunner<E>,
     fs: &dyn FileSystem,

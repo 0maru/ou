@@ -1,3 +1,15 @@
+//! `ou clean` -- Automatically remove worktrees whose branches are merged or have a gone upstream.
+//!
+//! Scans all worktrees and identifies cleanup candidates based on two criteria:
+//! - The branch is fully merged into the default source branch (e.g., `main`)
+//! - The branch's upstream tracking ref is gone (deleted on remote)
+//!
+//! In `--check` mode, performs a dry run listing what would be removed.
+//! In normal mode, removes each candidate's worktree and branch.
+//!
+//! Side effects: removes worktree directories and deletes git branches (unless --check).
+//! Related: `remove` is the manual equivalent; `clean` automates candidate selection.
+
 use crate::cli::CleanArgs;
 use crate::config::Config;
 use crate::error::OuError;
@@ -5,6 +17,11 @@ use crate::git::executor::GitExecutor;
 use crate::git::runner::GitRunner;
 use crate::git::types::MergeStatus;
 
+/// Execute the `clean` command.
+///
+/// Flow: list worktrees and branches -> for each non-bare, non-default worktree,
+/// check merge status and upstream gone status -> collect candidates -> either
+/// report (--check) or remove each candidate's worktree and branch.
 pub fn run<E: GitExecutor>(
     git: &GitRunner<E>,
     config: &Config,
@@ -29,7 +46,10 @@ pub fn run<E: GitExecutor>(
             continue;
         }
 
-        // Check if branch is merged
+        // Classify cleanup candidate based on two independent signals:
+        // 1. Is the branch fully merged into the default branch?
+        // 2. Has the upstream tracking branch been deleted on the remote?
+        // A worktree is a candidate if either condition is true.
         let merged = git
             .is_branch_merged(branch_name, default_branch)
             .unwrap_or(MergeStatus::Unknown);

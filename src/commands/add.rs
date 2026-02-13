@@ -1,3 +1,13 @@
+//! `ou add <name>` -- Create a new git worktree with branch, symlinks, and optional integrations.
+//!
+//! Orchestrates: branch creation, `git worktree add`, symlink creation from repo root,
+//! and optionally: lock the worktree, init submodules, carry uncommitted changes via
+//! stash, and auto-open in WezTerm.
+//!
+//! Side effects: creates a worktree directory, a git branch, symlinks on disk, and
+//! optionally modifies stash state and opens a terminal tab.
+//! Related: `sync` re-applies symlinks/submodules; `remove` is the inverse operation.
+
 use crate::cli::AddArgs;
 use crate::config::Config;
 use crate::error::OuError;
@@ -7,6 +17,11 @@ use crate::git::runner::GitRunner;
 use crate::multiplexer;
 use crate::symlink;
 
+/// Execute the `add` command.
+///
+/// Flow: sanitize name -> check existence -> optionally stash (--carry) -> create worktree
+/// -> create symlinks -> optionally lock -> optionally init submodules -> pop stash
+/// -> optionally auto-open in WezTerm.
 pub fn run<E: GitExecutor>(
     git: &GitRunner<E>,
     fs: &dyn FileSystem,
@@ -16,6 +31,7 @@ pub fn run<E: GitExecutor>(
     let repo_root = git.get_toplevel()?;
     let base_dir = config.worktree_base_dir(&repo_root);
 
+    // Sanitize branch name for use as directory name: "feat/login" -> "feat-login"
     let wt_name = args.name.replace('/', "-");
     let wt_path = base_dir.join(&wt_name);
 
@@ -68,7 +84,8 @@ pub fn run<E: GitExecutor>(
         msg.push_str(" [locked]");
     }
 
-    // Auto-open in WezTerm if configured
+    // Auto-open in WezTerm if configured: spawns a new tab at the worktree path
+    // with a title derived from the config template.
     let auto_open = config
         .wezterm
         .as_ref()
