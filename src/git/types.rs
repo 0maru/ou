@@ -12,6 +12,7 @@ pub struct Worktree {
 }
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct Branch {
     pub name: String,
     pub upstream: Option<String>,

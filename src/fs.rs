@@ -1,5 +1,6 @@
 use std::path::{Path, PathBuf};
 
+#[allow(dead_code)]
 pub trait FileSystem: Send + Sync {
     fn symlink(&self, original: &Path, link: &Path) -> Result<(), std::io::Error>;
     fn exists(&self, path: &Path) -> bool;
