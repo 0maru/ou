@@ -8,10 +8,10 @@ pub enum AppEvent {
 }
 
 pub fn poll_event(tick_rate: Duration) -> Option<AppEvent> {
-    if event::poll(tick_rate).ok()? {
-        if let Event::Key(key) = event::read().ok()? {
-            return Some(AppEvent::Key(key));
-        }
+    if event::poll(tick_rate).ok()?
+        && let Event::Key(key) = event::read().ok()?
+    {
+        return Some(AppEvent::Key(key));
     }
     Some(AppEvent::Tick)
 }

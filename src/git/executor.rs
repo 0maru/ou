@@ -23,18 +23,3 @@ impl GitExecutor for OsGitExecutor {
         })
     }
 }
-
-#[cfg(test)]
-pub struct MockGitExecutor {
-    pub responses: std::sync::Mutex<Vec<Result<CommandOutput, OuError>>>,
-}
-
-#[cfg(test)]
-impl GitExecutor for MockGitExecutor {
-    fn run(&self, _args: &[&str]) -> Result<CommandOutput, OuError> {
-        let mut responses = self.responses.lock().unwrap();
-        responses
-            .pop()
-            .unwrap_or(Err(OuError::Git("no more mock responses".to_string())))
-    }
-}

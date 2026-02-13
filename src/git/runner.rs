@@ -164,12 +164,12 @@ impl<E: GitExecutor> GitRunner<E> {
 
     pub fn default_branch(&self) -> Result<String, OuError> {
         let output = self.run(&["symbolic-ref", "refs/remotes/origin/HEAD"]);
-        if let Ok(out) = output {
-            if out.success() {
-                let full = out.stdout.trim();
-                if let Some(name) = full.strip_prefix("refs/remotes/origin/") {
-                    return Ok(name.to_string());
-                }
+        if let Ok(out) = output
+            && out.success()
+        {
+            let full = out.stdout.trim();
+            if let Some(name) = full.strip_prefix("refs/remotes/origin/") {
+                return Ok(name.to_string());
             }
         }
 

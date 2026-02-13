@@ -44,15 +44,15 @@ fn create_single_symlink(fs: &dyn FileSystem, source: &Path, target: &Path) -> R
         return Ok(());
     }
 
-    if let Some(parent) = target.parent() {
-        if !fs.exists(parent) {
-            fs.mkdir_all(parent).map_err(|e| {
-                OuError::Symlink(format!(
-                    "failed to create directory {}: {e}",
-                    parent.display()
-                ))
-            })?;
-        }
+    if let Some(parent) = target.parent()
+        && !fs.exists(parent)
+    {
+        fs.mkdir_all(parent).map_err(|e| {
+            OuError::Symlink(format!(
+                "failed to create directory {}: {e}",
+                parent.display()
+            ))
+        })?;
     }
 
     fs.symlink(source, target).map_err(|e| {

@@ -47,27 +47,24 @@ pub fn run_dashboard<E: GitExecutor>(git: &GitRunner<E>) -> Result<(), OuError> 
                         app.refresh(git);
                     } else if event::is_delete(&key) {
                         app.remove_selected(git);
-                    } else if event::is_enter(&key) {
-                        if let Some(wt) = app.selected_worktree() {
-                            let path = wt.path.clone();
-                            let branch = wt.branch.clone().unwrap_or_default();
-                            if let Some(mux) = multiplexer::detect_multiplexer() {
-                                match mux.open_tab(&path, Some(&branch)) {
-                                    Ok(_) => {
-                                        app.status_message =
-                                            Some(format!("Opened {branch} in {}", mux.name()));
-                                    }
-                                    Err(e) => {
-                                        app.status_message =
-                                            Some(format!("Failed to open tab: {e}"));
-                                    }
+                    } else if event::is_enter(&key)
+                        && let Some(wt) = app.selected_worktree()
+                    {
+                        let path = wt.path.clone();
+                        let branch = wt.branch.clone().unwrap_or_default();
+                        if let Some(mux) = multiplexer::detect_multiplexer() {
+                            match mux.open_tab(&path, Some(&branch)) {
+                                Ok(_) => {
+                                    app.status_message =
+                                        Some(format!("Opened {branch} in {}", mux.name()));
                                 }
-                            } else {
-                                app.status_message = Some(format!(
-                                    "No multiplexer detected. Path: {}",
-                                    path.display()
-                                ));
+                                Err(e) => {
+                                    app.status_message = Some(format!("Failed to open tab: {e}"));
+                                }
                             }
+                        } else {
+                            app.status_message =
+                                Some(format!("No multiplexer detected. Path: {}", path.display()));
                         }
                     }
                 }
