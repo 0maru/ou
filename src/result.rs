@@ -3,7 +3,6 @@ use std::fmt;
 pub enum FormatResult {
     Plain(String),
     Table(Vec<Vec<String>>),
-    Empty,
 }
 
 impl fmt::Display for FormatResult {
@@ -34,11 +33,6 @@ impl fmt::Display for FormatResult {
                 }
                 Ok(())
             }
-            FormatResult::Empty => Ok(()),
-        }
-    }
 }
-
-pub trait Formatter {
-    fn format(&self) -> FormatResult;
+    }
 }

@@ -30,6 +30,7 @@ impl<E: GitExecutor> GitRunner<E> {
         }
     }
 
+    #[allow(dead_code)]
     pub fn is_git_repo(&self) -> bool {
         self.run(&["rev-parse", "--git-dir"]).is_ok_and(|o| o.success())
     }
@@ -39,6 +40,7 @@ impl<E: GitExecutor> GitRunner<E> {
         Ok(PathBuf::from(out.trim()))
     }
 
+    #[allow(dead_code)]
     pub fn get_common_dir(&self) -> Result<PathBuf, OuError> {
         let out = self.run_ok(&["rev-parse", "--git-common-dir"])?;
         let p = PathBuf::from(out.trim());
@@ -49,6 +51,7 @@ impl<E: GitExecutor> GitRunner<E> {
         }
     }
 
+    #[allow(dead_code)]
     pub fn get_current_branch(&self) -> Result<Option<String>, OuError> {
         let output = self.run(&["symbolic-ref", "--short", "HEAD"])?;
         if output.success() {
@@ -139,6 +142,7 @@ impl<E: GitExecutor> GitRunner<E> {
         Ok(())
     }
 
+    #[allow(dead_code)]
     pub fn has_uncommitted_changes(&self) -> Result<bool, OuError> {
         let output = self.run_ok(&["status", "--porcelain"])?;
         Ok(!output.trim().is_empty())

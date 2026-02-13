@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 #[derive(Debug, thiserror::Error)]
+#[allow(dead_code)]
 pub enum OuError {
     #[error("not a git repository (or any of the parent directories)")]
     NotGitRepository,
