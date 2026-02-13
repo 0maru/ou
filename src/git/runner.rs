@@ -32,7 +32,8 @@ impl<E: GitExecutor> GitRunner<E> {
 
     #[allow(dead_code)]
     pub fn is_git_repo(&self) -> bool {
-        self.run(&["rev-parse", "--git-dir"]).is_ok_and(|o| o.success())
+        self.run(&["rev-parse", "--git-dir"])
+            .is_ok_and(|o| o.success())
     }
 
     pub fn get_toplevel(&self) -> Result<PathBuf, OuError> {
@@ -150,7 +151,14 @@ impl<E: GitExecutor> GitRunner<E> {
 
     pub fn init_submodules(&self, path: &Path) -> Result<(), OuError> {
         let path_str = path.to_string_lossy().to_string();
-        self.run_ok(&["-C", &path_str, "submodule", "update", "--init", "--recursive"])?;
+        self.run_ok(&[
+            "-C",
+            &path_str,
+            "submodule",
+            "update",
+            "--init",
+            "--recursive",
+        ])?;
         Ok(())
     }
 
@@ -210,9 +218,7 @@ fn parse_worktree_list(output: &str) -> Result<Vec<Worktree>, OuError> {
         } else if let Some(head) = line.strip_prefix("HEAD ") {
             current_head = head.to_string();
         } else if let Some(branch) = line.strip_prefix("branch ") {
-            let name = branch
-                .strip_prefix("refs/heads/")
-                .unwrap_or(branch);
+            let name = branch.strip_prefix("refs/heads/").unwrap_or(branch);
             current_branch = Some(name.to_string());
         } else if line == "bare" {
             is_bare = true;
@@ -254,7 +260,11 @@ fn parse_branch_list(output: &str) -> Result<Vec<Branch>, OuError> {
         }
         let name = parts[0].to_string();
         let upstream = parts.get(1).and_then(|s| {
-            if s.is_empty() { None } else { Some(s.to_string()) }
+            if s.is_empty() {
+                None
+            } else {
+                Some(s.to_string())
+            }
         });
         let is_head = parts.get(2).is_some_and(|s| s.trim() == "*");
         let gone = parts.get(3).is_some_and(|s| s.contains("[gone]"));

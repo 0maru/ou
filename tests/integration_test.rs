@@ -43,7 +43,7 @@ fn setup_git_repo() -> TempDir {
 }
 
 fn ou_cmd() -> Command {
-    Command::cargo_bin("ou").unwrap()
+    Command::new(assert_cmd::cargo::cargo_bin!("ou"))
 }
 
 #[test]
@@ -79,11 +79,7 @@ fn test_init_already_initialized() {
     let repo = setup_git_repo();
     let path = repo.path();
 
-    ou_cmd()
-        .args(["init"])
-        .current_dir(path)
-        .assert()
-        .success();
+    ou_cmd().args(["init"]).current_dir(path).assert().success();
 
     ou_cmd()
         .args(["init"])
@@ -127,11 +123,7 @@ fn test_add_and_remove() {
     let path = repo.path();
 
     // Init ou first
-    ou_cmd()
-        .args(["init"])
-        .current_dir(path)
-        .assert()
-        .success();
+    ou_cmd().args(["init"]).current_dir(path).assert().success();
 
     // Add worktree
     ou_cmd()
@@ -163,14 +155,16 @@ fn test_add_with_lock() {
     let repo = setup_git_repo();
     let path = repo.path();
 
-    ou_cmd()
-        .args(["init"])
-        .current_dir(path)
-        .assert()
-        .success();
+    ou_cmd().args(["init"]).current_dir(path).assert().success();
 
     ou_cmd()
-        .args(["add", "feat/locked", "--lock", "--reason", "work in progress"])
+        .args([
+            "add",
+            "feat/locked",
+            "--lock",
+            "--reason",
+            "work in progress",
+        ])
         .current_dir(path)
         .assert()
         .success()
@@ -201,11 +195,7 @@ fn test_add_with_symlinks() {
     // Create .env file in repo root
     std::fs::write(path.join(".env"), "SECRET=test\n").unwrap();
 
-    ou_cmd()
-        .args(["init"])
-        .current_dir(path)
-        .assert()
-        .success();
+    ou_cmd().args(["init"]).current_dir(path).assert().success();
 
     ou_cmd()
         .args(["add", "feat/symlink-test"])
@@ -223,7 +213,11 @@ fn test_add_with_symlinks() {
 
     let env_link = wt_dir.join(".env");
     assert!(
-        env_link.symlink_metadata().unwrap().file_type().is_symlink(),
+        env_link
+            .symlink_metadata()
+            .unwrap()
+            .file_type()
+            .is_symlink(),
         ".env should be a symlink in the worktree"
     );
 }
@@ -233,11 +227,7 @@ fn test_clean_check() {
     let repo = setup_git_repo();
     let path = repo.path();
 
-    ou_cmd()
-        .args(["init"])
-        .current_dir(path)
-        .assert()
-        .success();
+    ou_cmd().args(["init"]).current_dir(path).assert().success();
 
     // No merged worktrees to clean
     ou_cmd()

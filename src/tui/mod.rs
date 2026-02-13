@@ -20,11 +20,11 @@ use crate::multiplexer;
 use self::app::App;
 
 pub fn run_dashboard<E: GitExecutor>(git: &GitRunner<E>) -> Result<(), OuError> {
-    enable_raw_mode().map_err(|e| OuError::Io(e))?;
+    enable_raw_mode().map_err(OuError::Io)?;
     let mut stdout = io::stdout();
-    execute!(stdout, EnterAlternateScreen).map_err(|e| OuError::Io(e))?;
+    execute!(stdout, EnterAlternateScreen).map_err(OuError::Io)?;
     let backend = CrosstermBackend::new(stdout);
-    let mut terminal = Terminal::new(backend).map_err(|e| OuError::Io(e))?;
+    let mut terminal = Terminal::new(backend).map_err(OuError::Io)?;
 
     let mut app = App::new();
     app.refresh(git);
@@ -32,9 +32,7 @@ pub fn run_dashboard<E: GitExecutor>(git: &GitRunner<E>) -> Result<(), OuError> 
     let tick_rate = Duration::from_millis(250);
 
     loop {
-        terminal
-            .draw(|f| ui::draw(f, &app))
-            .map_err(|e| OuError::Io(e))?;
+        terminal.draw(|f| ui::draw(f, &app)).map_err(OuError::Io)?;
 
         if let Some(evt) = event::poll_event(tick_rate) {
             match evt {
@@ -78,9 +76,9 @@ pub fn run_dashboard<E: GitExecutor>(git: &GitRunner<E>) -> Result<(), OuError> 
         }
     }
 
-    disable_raw_mode().map_err(|e| OuError::Io(e))?;
-    execute!(terminal.backend_mut(), LeaveAlternateScreen).map_err(|e| OuError::Io(e))?;
-    terminal.show_cursor().map_err(|e| OuError::Io(e))?;
+    disable_raw_mode().map_err(OuError::Io)?;
+    execute!(terminal.backend_mut(), LeaveAlternateScreen).map_err(OuError::Io)?;
+    terminal.show_cursor().map_err(OuError::Io)?;
 
     Ok(())
 }

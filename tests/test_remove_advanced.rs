@@ -42,7 +42,7 @@ fn setup_git_repo() -> TempDir {
 }
 
 fn ou_cmd() -> Command {
-    Command::cargo_bin("ou").unwrap()
+    Command::new(assert_cmd::cargo::cargo_bin!("ou"))
 }
 
 #[test]
@@ -63,11 +63,7 @@ fn test_remove_multiple_branches() {
     let repo = setup_git_repo();
     let path = repo.path();
 
-    ou_cmd()
-        .args(["init"])
-        .current_dir(path)
-        .assert()
-        .success();
+    ou_cmd().args(["init"]).current_dir(path).assert().success();
 
     ou_cmd()
         .args(["add", "feat/rm-a"])
@@ -94,11 +90,7 @@ fn test_remove_with_force() {
     let repo = setup_git_repo();
     let path = repo.path();
 
-    ou_cmd()
-        .args(["init"])
-        .current_dir(path)
-        .assert()
-        .success();
+    ou_cmd().args(["init"]).current_dir(path).assert().success();
 
     ou_cmd()
         .args(["add", "feat/dirty"])
@@ -136,14 +128,16 @@ fn test_remove_locked_needs_double_force() {
     let repo = setup_git_repo();
     let path = repo.path();
 
-    ou_cmd()
-        .args(["init"])
-        .current_dir(path)
-        .assert()
-        .success();
+    ou_cmd().args(["init"]).current_dir(path).assert().success();
 
     ou_cmd()
-        .args(["add", "feat/locked-rm", "--lock", "--reason", "do not delete"])
+        .args([
+            "add",
+            "feat/locked-rm",
+            "--lock",
+            "--reason",
+            "do not delete",
+        ])
         .current_dir(path)
         .assert()
         .success();
@@ -178,11 +172,7 @@ fn test_remove_mixed_success_error() {
     let repo = setup_git_repo();
     let path = repo.path();
 
-    ou_cmd()
-        .args(["init"])
-        .current_dir(path)
-        .assert()
-        .success();
+    ou_cmd().args(["init"]).current_dir(path).assert().success();
 
     ou_cmd()
         .args(["add", "feat/exists"])

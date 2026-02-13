@@ -18,10 +18,7 @@ use crate::result::FormatResult;
 ///
 /// Queries `git worktree list --porcelain`, parses the output into `Worktree` structs,
 /// and formats them as either a colored table or plain path list depending on `--quiet`.
-pub fn run<E: GitExecutor>(
-    git: &GitRunner<E>,
-    args: &ListArgs,
-) -> Result<FormatResult, OuError> {
+pub fn run<E: GitExecutor>(git: &GitRunner<E>, args: &ListArgs) -> Result<FormatResult, OuError> {
     let worktrees = git.worktree_list()?;
 
     if args.quiet {

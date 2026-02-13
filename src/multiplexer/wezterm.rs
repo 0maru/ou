@@ -55,10 +55,8 @@ impl Multiplexer for WeztermMultiplexer {
             )));
         }
 
-        let json: Vec<serde_json::Value> =
-            serde_json::from_slice(&output.stdout).map_err(|e| {
-                OuError::Multiplexer(format!("failed to parse wezterm output: {e}"))
-            })?;
+        let json: Vec<serde_json::Value> = serde_json::from_slice(&output.stdout)
+            .map_err(|e| OuError::Multiplexer(format!("failed to parse wezterm output: {e}")))?;
 
         let tabs = json
             .into_iter()

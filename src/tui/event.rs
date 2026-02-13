@@ -18,8 +18,7 @@ pub fn poll_event(tick_rate: Duration) -> Option<AppEvent> {
 
 pub fn is_quit(key: &KeyEvent) -> bool {
     matches!(key.code, KeyCode::Char('q'))
-        || (key.modifiers.contains(KeyModifiers::CONTROL)
-            && matches!(key.code, KeyCode::Char('c')))
+        || (key.modifiers.contains(KeyModifiers::CONTROL) && matches!(key.code, KeyCode::Char('c')))
 }
 
 pub fn is_up(key: &KeyEvent) -> bool {

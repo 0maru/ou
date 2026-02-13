@@ -86,10 +86,7 @@ pub fn run<E: GitExecutor>(
 
     // Auto-open in WezTerm if configured: spawns a new tab at the worktree path
     // with a title derived from the config template.
-    let auto_open = config
-        .wezterm
-        .as_ref()
-        .is_some_and(|c| c.auto_open);
+    let auto_open = config.wezterm.as_ref().is_some_and(|c| c.auto_open);
 
     if auto_open {
         if let Some(mux) = multiplexer::detect_multiplexer() {

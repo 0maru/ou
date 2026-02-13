@@ -42,7 +42,7 @@ fn setup_git_repo() -> TempDir {
 }
 
 fn ou_cmd() -> Command {
-    Command::cargo_bin("ou").unwrap()
+    Command::new(assert_cmd::cargo::cargo_bin!("ou"))
 }
 
 /// Get the worktree directory path for a given branch name
@@ -85,11 +85,7 @@ fn test_clean_removes_merged_branch() {
     let repo = setup_git_repo();
     let path = repo.path();
 
-    ou_cmd()
-        .args(["init"])
-        .current_dir(path)
-        .assert()
-        .success();
+    ou_cmd().args(["init"]).current_dir(path).assert().success();
 
     ou_cmd()
         .args(["add", "feat/to-merge"])
@@ -111,7 +107,9 @@ fn test_clean_removes_merged_branch() {
         .current_dir(path)
         .assert()
         .success()
-        .stdout(predicate::str::contains("Cleaned:").and(predicate::str::contains("feat/to-merge")));
+        .stdout(
+            predicate::str::contains("Cleaned:").and(predicate::str::contains("feat/to-merge")),
+        );
 
     // Verify worktree directory no longer exists
     assert!(
@@ -125,11 +123,7 @@ fn test_clean_check_shows_candidates() {
     let repo = setup_git_repo();
     let path = repo.path();
 
-    ou_cmd()
-        .args(["init"])
-        .current_dir(path)
-        .assert()
-        .success();
+    ou_cmd().args(["init"]).current_dir(path).assert().success();
 
     ou_cmd()
         .args(["add", "feat/check-merge"])
@@ -163,11 +157,7 @@ fn test_clean_no_candidates() {
     let repo = setup_git_repo();
     let path = repo.path();
 
-    ou_cmd()
-        .args(["init"])
-        .current_dir(path)
-        .assert()
-        .success();
+    ou_cmd().args(["init"]).current_dir(path).assert().success();
 
     // Add a worktree and make a commit (so it's not a subset of main)
     ou_cmd()
@@ -193,11 +183,7 @@ fn test_clean_multiple_candidates() {
     let repo = setup_git_repo();
     let path = repo.path();
 
-    ou_cmd()
-        .args(["init"])
-        .current_dir(path)
-        .assert()
-        .success();
+    ou_cmd().args(["init"]).current_dir(path).assert().success();
 
     // Add two worktrees
     ou_cmd()

@@ -42,7 +42,7 @@ fn setup_git_repo() -> TempDir {
 }
 
 fn ou_cmd() -> Command {
-    Command::cargo_bin("ou").unwrap()
+    Command::new(assert_cmd::cargo::cargo_bin!("ou"))
 }
 
 #[test]
@@ -54,11 +54,7 @@ fn test_sync_all_syncs_worktrees() {
     std::fs::write(path.join(".env"), "SECRET=test\n").unwrap();
 
     // Init ou
-    ou_cmd()
-        .args(["init"])
-        .current_dir(path)
-        .assert()
-        .success();
+    ou_cmd().args(["init"]).current_dir(path).assert().success();
 
     // Add two worktrees
     ou_cmd()
@@ -107,11 +103,7 @@ fn test_sync_no_targets() {
     let path = repo.path();
 
     // Init ou
-    ou_cmd()
-        .args(["init"])
-        .current_dir(path)
-        .assert()
-        .success();
+    ou_cmd().args(["init"]).current_dir(path).assert().success();
 
     // sync --all with only main worktree (no additional worktrees)
     ou_cmd()
@@ -131,11 +123,7 @@ fn test_sync_recreates_deleted_symlinks() {
     std::fs::write(path.join(".env"), "SECRET=test\n").unwrap();
 
     // Init ou and add worktree
-    ou_cmd()
-        .args(["init"])
-        .current_dir(path)
-        .assert()
-        .success();
+    ou_cmd().args(["init"]).current_dir(path).assert().success();
 
     ou_cmd()
         .args(["add", "feat/resync"])
@@ -154,7 +142,11 @@ fn test_sync_recreates_deleted_symlinks() {
 
     // Verify symlink exists after add
     assert!(
-        env_link.symlink_metadata().unwrap().file_type().is_symlink(),
+        env_link
+            .symlink_metadata()
+            .unwrap()
+            .file_type()
+            .is_symlink(),
         ".env symlink should exist after add"
     );
 
@@ -172,7 +164,11 @@ fn test_sync_recreates_deleted_symlinks() {
 
     // Verify symlink was recreated
     assert!(
-        env_link.symlink_metadata().unwrap().file_type().is_symlink(),
+        env_link
+            .symlink_metadata()
+            .unwrap()
+            .file_type()
+            .is_symlink(),
         ".env symlink should be recreated after sync"
     );
 }
@@ -183,11 +179,7 @@ fn test_sync_nonexistent_source() {
     let path = repo.path();
 
     // Init ou
-    ou_cmd()
-        .args(["init"])
-        .current_dir(path)
-        .assert()
-        .success();
+    ou_cmd().args(["init"]).current_dir(path).assert().success();
 
     // sync with nonexistent source
     ou_cmd()

@@ -42,7 +42,7 @@ fn setup_git_repo() -> TempDir {
 }
 
 fn ou_cmd() -> Command {
-    Command::cargo_bin("ou").unwrap()
+    Command::new(assert_cmd::cargo::cargo_bin!("ou"))
 }
 
 #[test]
@@ -51,11 +51,7 @@ fn test_add_with_source() {
     let path = repo.path();
 
     // Init ou
-    ou_cmd()
-        .args(["init"])
-        .current_dir(path)
-        .assert()
-        .success();
+    ou_cmd().args(["init"]).current_dir(path).assert().success();
 
     // Create develop branch
     Command::new("git")
@@ -83,11 +79,7 @@ fn test_add_duplicate_name() {
     let repo = setup_git_repo();
     let path = repo.path();
 
-    ou_cmd()
-        .args(["init"])
-        .current_dir(path)
-        .assert()
-        .success();
+    ou_cmd().args(["init"]).current_dir(path).assert().success();
 
     // First add
     ou_cmd()
@@ -110,11 +102,7 @@ fn test_add_with_carry() {
     let repo = setup_git_repo();
     let path = repo.path();
 
-    ou_cmd()
-        .args(["init"])
-        .current_dir(path)
-        .assert()
-        .success();
+    ou_cmd().args(["init"]).current_dir(path).assert().success();
 
     // Create uncommitted change
     std::fs::write(path.join("README.md"), "# test\ndirty\n").unwrap();
@@ -133,11 +121,7 @@ fn test_add_slash_to_dash() {
     let repo = setup_git_repo();
     let path = repo.path();
 
-    ou_cmd()
-        .args(["init"])
-        .current_dir(path)
-        .assert()
-        .success();
+    ou_cmd().args(["init"]).current_dir(path).assert().success();
 
     // Add worktree with slash in name
     let output = ou_cmd()
@@ -161,15 +145,17 @@ fn test_add_lock_with_reason() {
     let repo = setup_git_repo();
     let path = repo.path();
 
-    ou_cmd()
-        .args(["init"])
-        .current_dir(path)
-        .assert()
-        .success();
+    ou_cmd().args(["init"]).current_dir(path).assert().success();
 
     // Add worktree with lock and reason
     ou_cmd()
-        .args(["add", "feat/locked-reason", "--lock", "--reason", "testing lock"])
+        .args([
+            "add",
+            "feat/locked-reason",
+            "--lock",
+            "--reason",
+            "testing lock",
+        ])
         .current_dir(path)
         .assert()
         .success()

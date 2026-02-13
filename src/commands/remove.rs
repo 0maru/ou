@@ -21,10 +21,7 @@ use crate::git::runner::GitRunner;
 /// Iterates over the requested branch names, resolves each to a worktree, validates
 /// lock/bare status against the force level, removes the worktree, then attempts to
 /// delete the branch. Returns a combined success/error report.
-pub fn run<E: GitExecutor>(
-    git: &GitRunner<E>,
-    args: &RemoveArgs,
-) -> Result<String, OuError> {
+pub fn run<E: GitExecutor>(git: &GitRunner<E>, args: &RemoveArgs) -> Result<String, OuError> {
     if args.branches.is_empty() {
         return Err(OuError::Git("no branches specified".to_string()));
     }
@@ -34,9 +31,9 @@ pub fn run<E: GitExecutor>(
     let mut errors = Vec::new();
 
     for branch_name in &args.branches {
-        let wt = worktrees.iter().find(|wt| {
-            wt.branch.as_deref() == Some(branch_name)
-        });
+        let wt = worktrees
+            .iter()
+            .find(|wt| wt.branch.as_deref() == Some(branch_name));
 
         let Some(wt) = wt else {
             errors.push(format!("worktree for branch '{branch_name}' not found"));
