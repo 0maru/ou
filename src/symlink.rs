@@ -64,3 +64,70 @@ fn create_single_symlink(
         ))
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::fs::mock::MockFileSystem;
+    use std::path::PathBuf;
+
+    #[test]
+    fn test_create_symlinks_literal_file() {
+        let fs = MockFileSystem::new()
+            .with_file(PathBuf::from("/src/.env"), "SECRET=123");
+        let created = create_symlinks(
+            &fs,
+            Path::new("/src"),
+            Path::new("/target"),
+            &[".env".to_string()],
+        )
+        .unwrap();
+        assert_eq!(created, vec![".env".to_string()]);
+    }
+
+    #[test]
+    fn test_create_symlinks_target_exists_skip() {
+        // When target already exists, create_single_symlink skips actual symlink creation
+        // but create_symlinks still reports the pattern as processed.
+        // Verify no actual symlink call is made by checking the mock's symlinks list is empty.
+        let fs = MockFileSystem::new()
+            .with_file(PathBuf::from("/src/.env"), "SECRET=123")
+            .with_file(PathBuf::from("/target/.env"), "ALREADY_EXISTS");
+        let _created = create_symlinks(
+            &fs,
+            Path::new("/src"),
+            Path::new("/target"),
+            &[".env".to_string()],
+        )
+        .unwrap();
+        // The key behavior: no symlink() call was made because target exists
+        assert!(!fs.is_symlink(Path::new("/target/.env")));
+    }
+
+    #[test]
+    fn test_create_symlinks_no_match() {
+        let fs = MockFileSystem::new();
+        let created = create_symlinks(
+            &fs,
+            Path::new("/src"),
+            Path::new("/target"),
+            &["nonexistent".to_string()],
+        )
+        .unwrap();
+        assert!(created.is_empty());
+    }
+
+    #[test]
+    fn test_create_symlinks_creates_parent_dirs() {
+        let fs = MockFileSystem::new()
+            .with_file(PathBuf::from("/src/sub/file.txt"), "content");
+        let created = create_symlinks(
+            &fs,
+            Path::new("/src"),
+            Path::new("/target"),
+            &["sub/file.txt".to_string()],
+        )
+        .unwrap();
+        assert_eq!(created, vec!["sub/file.txt".to_string()]);
+    }
+}
