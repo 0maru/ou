@@ -107,11 +107,9 @@ fn test_remove_with_force() {
         .success();
 
     // Find the worktree directory and create an uncommitted file
-    let repo_name = path.file_name().unwrap().to_string_lossy();
     let wt_dir = path
-        .parent()
-        .unwrap()
-        .join(format!("{repo_name}-worktrees"))
+        .join(".git")
+        .join("ou-worktrees")
         .join("feat-dirty");
     std::fs::write(wt_dir.join("uncommitted.txt"), "dirty content\n").unwrap();
 

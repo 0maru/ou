@@ -108,7 +108,7 @@ impl Config {
         all
     }
 
-    pub fn worktree_base_dir(&self, repo_root: &Path) -> PathBuf {
+    pub fn worktree_base_dir(&self, repo_root: &Path, git_common_dir: &Path) -> PathBuf {
         match &self.worktree_destination_base_dir {
             Some(dir) => {
                 let p = PathBuf::from(dir);
@@ -118,16 +118,7 @@ impl Config {
                     repo_root.join(p)
                 }
             }
-            None => {
-                let repo_name = repo_root
-                    .file_name()
-                    .map(|n| n.to_string_lossy().to_string())
-                    .unwrap_or_else(|| "repo".to_string());
-                repo_root
-                    .parent()
-                    .unwrap_or(repo_root)
-                    .join(format!("{repo_name}-worktrees"))
-            }
+            None => git_common_dir.join("ou-worktrees"),
         }
     }
 
@@ -136,8 +127,7 @@ impl Config {
     }
 
     pub fn default_toml() -> String {
-        r#"worktree_destination_base_dir = "../{repo_name}-worktrees"
-default_source = "main"
+        r#"default_source = "main"
 symlinks = [".env", ".envrc", ".tool-versions"]
 extra_symlinks = []
 init_submodules = false
@@ -311,7 +301,7 @@ mod tests {
             worktree_destination_base_dir: Some("/absolute/path".to_string()),
             ..Config::default()
         };
-        let result = cfg.worktree_base_dir(Path::new("/repo/root"));
+        let result = cfg.worktree_base_dir(Path::new("/repo/root"), Path::new("/repo/root/.git"));
         assert_eq!(result, PathBuf::from("/absolute/path"));
     }
 
@@ -321,15 +311,15 @@ mod tests {
             worktree_destination_base_dir: Some("../worktrees".to_string()),
             ..Config::default()
         };
-        let result = cfg.worktree_base_dir(Path::new("/repo/root"));
+        let result = cfg.worktree_base_dir(Path::new("/repo/root"), Path::new("/repo/root/.git"));
         assert_eq!(result, PathBuf::from("/repo/root/../worktrees"));
     }
 
     #[test]
     fn test_worktree_base_dir_none() {
         let cfg = Config::default();
-        let result = cfg.worktree_base_dir(Path::new("/home/user/myrepo"));
-        assert_eq!(result, PathBuf::from("/home/user/myrepo-worktrees"));
+        let result = cfg.worktree_base_dir(Path::new("/home/user/myrepo"), Path::new("/home/user/myrepo/.git"));
+        assert_eq!(result, PathBuf::from("/home/user/myrepo/.git/ou-worktrees"));
     }
 
     #[test]
