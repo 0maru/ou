@@ -1,49 +1,9 @@
-use std::process::Command;
+mod common;
 
 use assert_cmd::prelude::*;
 use predicates::prelude::*;
-use tempfile::TempDir;
 
-fn setup_git_repo() -> TempDir {
-    let dir = TempDir::new().unwrap();
-    let path = dir.path();
-
-    Command::new("git")
-        .args(["init", "--initial-branch=main"])
-        .current_dir(path)
-        .output()
-        .unwrap();
-
-    Command::new("git")
-        .args(["config", "user.email", "test@test.com"])
-        .current_dir(path)
-        .output()
-        .unwrap();
-
-    Command::new("git")
-        .args(["config", "user.name", "Test User"])
-        .current_dir(path)
-        .output()
-        .unwrap();
-
-    std::fs::write(path.join("README.md"), "# test\n").unwrap();
-    Command::new("git")
-        .args(["add", "."])
-        .current_dir(path)
-        .output()
-        .unwrap();
-    Command::new("git")
-        .args(["commit", "-m", "initial"])
-        .current_dir(path)
-        .output()
-        .unwrap();
-
-    dir
-}
-
-fn ou_cmd() -> Command {
-    Command::new(assert_cmd::cargo::cargo_bin!("ou"))
-}
+use common::{ou_cmd, setup_git_repo};
 
 #[test]
 fn test_remove_no_args() {
@@ -98,7 +58,6 @@ fn test_remove_with_force() {
         .assert()
         .success();
 
-    // Find the worktree directory and create an uncommitted file
     let repo_name = path.file_name().unwrap().to_string_lossy();
     let wt_dir = path
         .parent()
@@ -107,14 +66,12 @@ fn test_remove_with_force() {
         .join("feat-dirty");
     std::fs::write(wt_dir.join("uncommitted.txt"), "dirty content\n").unwrap();
 
-    // Remove without force should fail
     ou_cmd()
         .args(["remove", "feat/dirty"])
         .current_dir(path)
         .assert()
         .failure();
 
-    // Remove with force should succeed
     ou_cmd()
         .args(["remove", "feat/dirty", "-f"])
         .current_dir(path)
@@ -127,6 +84,8 @@ fn test_remove_with_force() {
 fn test_remove_locked_needs_double_force() {
     let repo = setup_git_repo();
     let path = repo.path();
+
+    common::require_git!(2, 15);
 
     ou_cmd().args(["init"]).current_dir(path).assert().success();
 
@@ -142,7 +101,6 @@ fn test_remove_locked_needs_double_force() {
         .assert()
         .success();
 
-    // Remove without force should fail (locked)
     ou_cmd()
         .args(["remove", "feat/locked-rm"])
         .current_dir(path)
@@ -150,7 +108,6 @@ fn test_remove_locked_needs_double_force() {
         .failure()
         .stderr(predicate::str::contains("locked"));
 
-    // Remove with single -f should still fail (locked requires -ff)
     ou_cmd()
         .args(["remove", "feat/locked-rm", "-f"])
         .current_dir(path)
@@ -158,7 +115,6 @@ fn test_remove_locked_needs_double_force() {
         .failure()
         .stderr(predicate::str::contains("locked"));
 
-    // Remove with -ff should succeed
     ou_cmd()
         .args(["remove", "feat/locked-rm", "-ff"])
         .current_dir(path)
@@ -180,7 +136,6 @@ fn test_remove_mixed_success_error() {
         .assert()
         .success();
 
-    // Remove existing + nonexistent
     let output = ou_cmd()
         .args(["remove", "feat/exists", "nonexistent"])
         .current_dir(path)

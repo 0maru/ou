@@ -1,59 +1,19 @@
+mod common;
+
 use std::process::Command;
 
 use assert_cmd::prelude::*;
 use predicates::prelude::*;
-use tempfile::TempDir;
 
-fn setup_git_repo() -> TempDir {
-    let dir = TempDir::new().unwrap();
-    let path = dir.path();
-
-    Command::new("git")
-        .args(["init", "--initial-branch=main"])
-        .current_dir(path)
-        .output()
-        .unwrap();
-
-    Command::new("git")
-        .args(["config", "user.email", "test@test.com"])
-        .current_dir(path)
-        .output()
-        .unwrap();
-
-    Command::new("git")
-        .args(["config", "user.name", "Test User"])
-        .current_dir(path)
-        .output()
-        .unwrap();
-
-    std::fs::write(path.join("README.md"), "# test\n").unwrap();
-    Command::new("git")
-        .args(["add", "."])
-        .current_dir(path)
-        .output()
-        .unwrap();
-    Command::new("git")
-        .args(["commit", "-m", "initial"])
-        .current_dir(path)
-        .output()
-        .unwrap();
-
-    dir
-}
-
-fn ou_cmd() -> Command {
-    Command::new(assert_cmd::cargo::cargo_bin!("ou"))
-}
+use common::{ou_cmd, setup_git_repo};
 
 #[test]
 fn test_add_with_source() {
     let repo = setup_git_repo();
     let path = repo.path();
 
-    // Init ou
     ou_cmd().args(["init"]).current_dir(path).assert().success();
 
-    // Create develop branch
     Command::new("git")
         .args(["checkout", "-b", "develop"])
         .current_dir(path)
@@ -65,7 +25,6 @@ fn test_add_with_source() {
         .output()
         .unwrap();
 
-    // Add worktree from develop
     ou_cmd()
         .args(["add", "feat/from-dev", "--source", "develop"])
         .current_dir(path)
@@ -81,14 +40,12 @@ fn test_add_duplicate_name() {
 
     ou_cmd().args(["init"]).current_dir(path).assert().success();
 
-    // First add
     ou_cmd()
         .args(["add", "feat/dup"])
         .current_dir(path)
         .assert()
         .success();
 
-    // Second add should fail
     ou_cmd()
         .args(["add", "feat/dup"])
         .current_dir(path)
@@ -104,10 +61,8 @@ fn test_add_with_carry() {
 
     ou_cmd().args(["init"]).current_dir(path).assert().success();
 
-    // Create uncommitted change
     std::fs::write(path.join("README.md"), "# test\ndirty\n").unwrap();
 
-    // Add with carry should succeed even with uncommitted changes
     ou_cmd()
         .args(["add", "feat/carried", "--carry"])
         .current_dir(path)
@@ -123,7 +78,6 @@ fn test_add_slash_to_dash() {
 
     ou_cmd().args(["init"]).current_dir(path).assert().success();
 
-    // Add worktree with slash in name
     let output = ou_cmd()
         .args(["add", "feat/slash-test"])
         .current_dir(path)
@@ -133,7 +87,6 @@ fn test_add_slash_to_dash() {
     assert!(output.status.success());
 
     let stdout = String::from_utf8_lossy(&output.stdout);
-    // The worktree directory name should use dash instead of slash
     assert!(
         stdout.contains("feat-slash-test"),
         "worktree path should contain 'feat-slash-test', got: {stdout}"
@@ -145,9 +98,10 @@ fn test_add_lock_with_reason() {
     let repo = setup_git_repo();
     let path = repo.path();
 
+    common::require_git!(2, 15);
+
     ou_cmd().args(["init"]).current_dir(path).assert().success();
 
-    // Add worktree with lock and reason
     ou_cmd()
         .args([
             "add",
@@ -161,7 +115,6 @@ fn test_add_lock_with_reason() {
         .success()
         .stdout(predicate::str::contains("[locked]"));
 
-    // Verify locked status in list
     ou_cmd()
         .args(["list"])
         .current_dir(path)
