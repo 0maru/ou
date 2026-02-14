@@ -58,10 +58,7 @@ fn test_remove_with_force() {
         .assert()
         .success();
 
-    let wt_dir = path
-        .join(".git")
-        .join("ou-worktrees")
-        .join("feat-dirty");
+    let wt_dir = path.join(".git").join("ou-worktrees").join("feat-dirty");
     std::fs::write(wt_dir.join("uncommitted.txt"), "dirty content\n").unwrap();
 
     ou_cmd()

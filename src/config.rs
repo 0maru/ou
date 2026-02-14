@@ -320,7 +320,10 @@ mod tests {
     #[test]
     fn test_worktree_base_dir_none() {
         let cfg = Config::default();
-        let result = cfg.worktree_base_dir(Path::new("/home/user/myrepo"), Path::new("/home/user/myrepo/.git"));
+        let result = cfg.worktree_base_dir(
+            Path::new("/home/user/myrepo"),
+            Path::new("/home/user/myrepo/.git"),
+        );
         assert_eq!(result, PathBuf::from("/home/user/myrepo/.git/ou-worktrees"));
     }
 

@@ -78,10 +78,7 @@ fn test_sync_recreates_deleted_symlinks() {
         .assert()
         .success();
 
-    let wt_dir = path
-        .join(".git")
-        .join("ou-worktrees")
-        .join("feat-resync");
+    let wt_dir = path.join(".git").join("ou-worktrees").join("feat-resync");
     let env_link = wt_dir.join(".env");
 
     assert!(
