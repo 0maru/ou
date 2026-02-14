@@ -28,19 +28,12 @@ pub fn run<E: GitExecutor>(git: &GitRunner<E>, fs: &dyn FileSystem) -> Result<St
         return Err(OuError::AlreadyInitialized(settings_path));
     }
 
-    let repo_name = repo_root
-        .file_name()
-        .map(|n| n.to_string_lossy().to_string())
-        .unwrap_or_else(|| "repo".to_string());
-
     let default_branch = git.default_branch()?;
 
-    let template = Config::default_toml()
-        .replace("{repo_name}", &repo_name)
-        .replace(
-            "default_source = \"main\"",
-            &format!("default_source = \"{default_branch}\""),
-        );
+    let template = Config::default_toml().replace(
+        "default_source = \"main\"",
+        &format!("default_source = \"{default_branch}\""),
+    );
 
     fs.mkdir_all(&settings_dir)?;
     fs.write(&settings_path, &template)?;

@@ -161,11 +161,9 @@ fn test_add_with_symlinks() {
         .assert()
         .success();
 
-    let repo_name = path.file_name().unwrap().to_string_lossy();
     let wt_dir = path
-        .parent()
-        .unwrap()
-        .join(format!("{repo_name}-worktrees"))
+        .join(".git")
+        .join("ou-worktrees")
         .join("feat-symlink-test");
 
     let env_link = wt_dir.join(".env");

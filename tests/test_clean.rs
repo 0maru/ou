@@ -8,11 +8,7 @@ use predicates::prelude::*;
 use common::{ou_cmd, setup_git_repo};
 
 fn worktree_dir(repo_path: &std::path::Path, branch: &str) -> std::path::PathBuf {
-    let repo_name = repo_path.file_name().unwrap().to_string_lossy();
-    let wt_base = repo_path
-        .parent()
-        .unwrap()
-        .join(format!("{repo_name}-worktrees"));
+    let wt_base = repo_path.join(".git").join("ou-worktrees");
     wt_base.join(branch.replace('/', "-"))
 }
 

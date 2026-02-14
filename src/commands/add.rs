@@ -29,7 +29,8 @@ pub fn run<E: GitExecutor>(
     args: &AddArgs,
 ) -> Result<String, OuError> {
     let repo_root = git.get_toplevel()?;
-    let base_dir = config.worktree_base_dir(&repo_root);
+    let git_common_dir = git.get_common_dir()?;
+    let base_dir = config.worktree_base_dir(&repo_root, &git_common_dir);
 
     // Sanitize branch name for use as directory name: "feat/login" -> "feat-login"
     let wt_name = args.name.replace('/', "-");
