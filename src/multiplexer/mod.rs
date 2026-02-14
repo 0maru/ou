@@ -5,12 +5,14 @@ use std::path::Path;
 use crate::error::OuError;
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct TabInfo {
     pub id: String,
     pub title: String,
     pub cwd: Option<String>,
 }
 
+#[allow(dead_code)]
 pub trait Multiplexer: Send + Sync {
     fn name(&self) -> &'static str;
     fn is_available(&self) -> bool;

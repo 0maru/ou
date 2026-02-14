@@ -87,27 +87,22 @@ pub fn run<E: GitExecutor>(
 
     // Auto-open in WezTerm if configured: spawns a new tab at the worktree path
     // with a title derived from the config template.
-    let auto_open = config
-        .wezterm
-        .as_ref()
-        .is_some_and(|c| c.auto_open);
+    let auto_open = config.wezterm.as_ref().is_some_and(|c| c.auto_open);
 
-    if auto_open {
-        if let Some(mux) = multiplexer::detect_multiplexer() {
-            let title = config
-                .wezterm
-                .as_ref()
-                .and_then(|c| c.tab_title_template.as_ref())
-                .map(|tmpl| tmpl.replace("{name}", &args.name))
-                .unwrap_or_else(|| args.name.clone());
+    if auto_open && let Some(mux) = multiplexer::detect_multiplexer() {
+        let title = config
+            .wezterm
+            .as_ref()
+            .and_then(|c| c.tab_title_template.as_ref())
+            .map(|tmpl| tmpl.replace("{name}", &args.name))
+            .unwrap_or_else(|| args.name.clone());
 
-            match mux.open_tab(&wt_path, Some(&title)) {
-                Ok(pane_id) => {
-                    msg.push_str(&format!(" (opened in {} pane {})", mux.name(), pane_id));
-                }
-                Err(e) => {
-                    eprintln!("Warning: failed to open tab: {e}");
-                }
+        match mux.open_tab(&wt_path, Some(&title)) {
+            Ok(pane_id) => {
+                msg.push_str(&format!(" (opened in {} pane {})", mux.name(), pane_id));
+            }
+            Err(e) => {
+                eprintln!("Warning: failed to open tab: {e}");
             }
         }
     }

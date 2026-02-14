@@ -19,10 +19,7 @@ use crate::multiplexer;
 /// Flow: list worktrees -> filter bare -> present numbered selection via stderr
 /// -> read choice from stdin -> detect multiplexer -> open tab with configured title.
 /// Falls back to printing the selection if no multiplexer is available.
-pub fn run<E: GitExecutor>(
-    git: &GitRunner<E>,
-    config: &Config,
-) -> Result<String, OuError> {
+pub fn run<E: GitExecutor>(git: &GitRunner<E>, config: &Config) -> Result<String, OuError> {
     let worktrees = git.worktree_list()?;
 
     if worktrees.is_empty() {

@@ -9,10 +9,7 @@ use super::app::App;
 pub fn draw(f: &mut Frame, app: &App) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([
-            Constraint::Min(3),
-            Constraint::Length(3),
-        ])
+        .constraints([Constraint::Min(3), Constraint::Length(3)])
         .split(f.area());
 
     // Worktree list
@@ -31,13 +28,12 @@ pub fn draw(f: &mut Frame, app: &App) {
             let mut spans = vec![
                 Span::styled(
                     format!("{branch:<30}"),
-                    Style::default().fg(Color::Green).add_modifier(Modifier::BOLD),
+                    Style::default()
+                        .fg(Color::Green)
+                        .add_modifier(Modifier::BOLD),
                 ),
                 Span::raw(" "),
-                Span::styled(
-                    short_head.to_string(),
-                    Style::default().fg(Color::Yellow),
-                ),
+                Span::styled(short_head.to_string(), Style::default().fg(Color::Yellow)),
                 Span::raw("  "),
                 Span::styled(
                     wt.path.to_string_lossy().to_string(),
@@ -47,10 +43,7 @@ pub fn draw(f: &mut Frame, app: &App) {
 
             if wt.is_locked {
                 spans.push(Span::raw(" "));
-                spans.push(Span::styled(
-                    "[locked]",
-                    Style::default().fg(Color::Red),
-                ));
+                spans.push(Span::styled("[locked]", Style::default().fg(Color::Red)));
             }
 
             let style = if i == app.selected {

@@ -12,9 +12,9 @@ pub fn create_symlinks(
     let mut created = Vec::new();
 
     for pattern in patterns {
-        let matches = fs.glob(source_dir, pattern).map_err(|e| {
-            OuError::Symlink(format!("glob error for pattern '{pattern}': {e}"))
-        })?;
+        let matches = fs
+            .glob(source_dir, pattern)
+            .map_err(|e| OuError::Symlink(format!("glob error for pattern '{pattern}': {e}")))?;
 
         if matches.is_empty() {
             let source_path = source_dir.join(pattern);
@@ -39,21 +39,20 @@ pub fn create_symlinks(
     Ok(created)
 }
 
-fn create_single_symlink(
-    fs: &dyn FileSystem,
-    source: &Path,
-    target: &Path,
-) -> Result<(), OuError> {
+fn create_single_symlink(fs: &dyn FileSystem, source: &Path, target: &Path) -> Result<(), OuError> {
     if fs.exists(target) || fs.is_symlink(target) {
         return Ok(());
     }
 
-    if let Some(parent) = target.parent() {
-        if !fs.exists(parent) {
-            fs.mkdir_all(parent).map_err(|e| {
-                OuError::Symlink(format!("failed to create directory {}: {e}", parent.display()))
-            })?;
-        }
+    if let Some(parent) = target.parent()
+        && !fs.exists(parent)
+    {
+        fs.mkdir_all(parent).map_err(|e| {
+            OuError::Symlink(format!(
+                "failed to create directory {}: {e}",
+                parent.display()
+            ))
+        })?;
     }
 
     fs.symlink(source, target).map_err(|e| {
@@ -73,8 +72,7 @@ mod tests {
 
     #[test]
     fn test_create_symlinks_literal_file() {
-        let fs = MockFileSystem::new()
-            .with_file(PathBuf::from("/src/.env"), "SECRET=123");
+        let fs = MockFileSystem::new().with_file(PathBuf::from("/src/.env"), "SECRET=123");
         let created = create_symlinks(
             &fs,
             Path::new("/src"),
@@ -119,8 +117,7 @@ mod tests {
 
     #[test]
     fn test_create_symlinks_creates_parent_dirs() {
-        let fs = MockFileSystem::new()
-            .with_file(PathBuf::from("/src/sub/file.txt"), "content");
+        let fs = MockFileSystem::new().with_file(PathBuf::from("/src/sub/file.txt"), "content");
         let created = create_symlinks(
             &fs,
             Path::new("/src"),
