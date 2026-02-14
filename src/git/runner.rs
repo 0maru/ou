@@ -32,7 +32,8 @@ impl<E: GitExecutor> GitRunner<E> {
 
     #[allow(dead_code)]
     pub fn is_git_repo(&self) -> bool {
-        self.run(&["rev-parse", "--git-dir"]).is_ok_and(|o| o.success())
+        self.run(&["rev-parse", "--git-dir"])
+            .is_ok_and(|o| o.success())
     }
 
     pub fn get_toplevel(&self) -> Result<PathBuf, OuError> {
@@ -150,18 +151,34 @@ impl<E: GitExecutor> GitRunner<E> {
 
     pub fn init_submodules(&self, path: &Path) -> Result<(), OuError> {
         let path_str = path.to_string_lossy().to_string();
-        self.run_ok(&["-C", &path_str, "submodule", "update", "--init", "--recursive"])?;
+        self.run_ok(&[
+            "-C",
+            &path_str,
+            "submodule",
+            "update",
+            "--init",
+            "--recursive",
+        ])?;
         Ok(())
+    }
+
+    pub fn git_version(&self) -> Result<(u32, u32, u32), OuError> {
+        let output = self.executor.run(&["--version"])?;
+        if output.success() {
+            parse_git_version(&output.stdout)
+        } else {
+            Err(OuError::Git("failed to get git version".to_string()))
+        }
     }
 
     pub fn default_branch(&self) -> Result<String, OuError> {
         let output = self.run(&["symbolic-ref", "refs/remotes/origin/HEAD"]);
-        if let Ok(out) = output {
-            if out.success() {
-                let full = out.stdout.trim();
-                if let Some(name) = full.strip_prefix("refs/remotes/origin/") {
-                    return Ok(name.to_string());
-                }
+        if let Ok(out) = output
+            && out.success()
+        {
+            let full = out.stdout.trim();
+            if let Some(name) = full.strip_prefix("refs/remotes/origin/") {
+                return Ok(name.to_string());
             }
         }
 
@@ -174,6 +191,32 @@ impl<E: GitExecutor> GitRunner<E> {
 
         Ok("main".to_string())
     }
+}
+
+fn parse_git_version(output: &str) -> Result<(u32, u32, u32), OuError> {
+    // Handles formats like:
+    //   "git version 2.39.3 (Apple Git-146)"
+    //   "git version 2.43.0"
+    //   "git version 2.44.0.windows.1"
+    let version_str = output
+        .trim()
+        .strip_prefix("git version ")
+        .ok_or_else(|| OuError::Git(format!("unexpected git version output: {output}")))?;
+
+    let version_part = version_str
+        .split(|c: char| !c.is_ascii_digit() && c != '.')
+        .next()
+        .unwrap_or("");
+    let parts: Vec<&str> = version_part.split('.').collect();
+
+    let parse = |i: usize| -> Result<u32, OuError> {
+        parts
+            .get(i)
+            .and_then(|s| s.parse().ok())
+            .ok_or_else(|| OuError::Git(format!("failed to parse git version: {output}")))
+    };
+
+    Ok((parse(0)?, parse(1)?, parse(2)?))
 }
 
 fn parse_worktree_list(output: &str) -> Result<Vec<Worktree>, OuError> {
@@ -210,9 +253,7 @@ fn parse_worktree_list(output: &str) -> Result<Vec<Worktree>, OuError> {
         } else if let Some(head) = line.strip_prefix("HEAD ") {
             current_head = head.to_string();
         } else if let Some(branch) = line.strip_prefix("branch ") {
-            let name = branch
-                .strip_prefix("refs/heads/")
-                .unwrap_or(branch);
+            let name = branch.strip_prefix("refs/heads/").unwrap_or(branch);
             current_branch = Some(name.to_string());
         } else if line == "bare" {
             is_bare = true;
@@ -254,7 +295,11 @@ fn parse_branch_list(output: &str) -> Result<Vec<Branch>, OuError> {
         }
         let name = parts[0].to_string();
         let upstream = parts.get(1).and_then(|s| {
-            if s.is_empty() { None } else { Some(s.to_string()) }
+            if s.is_empty() {
+                None
+            } else {
+                Some(s.to_string())
+            }
         });
         let is_head = parts.get(2).is_some_and(|s| s.trim() == "*");
         let gone = parts.get(3).is_some_and(|s| s.contains("[gone]"));
@@ -272,6 +317,24 @@ fn parse_branch_list(output: &str) -> Result<Vec<Branch>, OuError> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_parse_git_version_standard() {
+        let v = parse_git_version("git version 2.43.0\n").unwrap();
+        assert_eq!(v, (2, 43, 0));
+    }
+
+    #[test]
+    fn test_parse_git_version_apple() {
+        let v = parse_git_version("git version 2.39.3 (Apple Git-146)\n").unwrap();
+        assert_eq!(v, (2, 39, 3));
+    }
+
+    #[test]
+    fn test_parse_git_version_windows() {
+        let v = parse_git_version("git version 2.44.0.windows.1\n").unwrap();
+        assert_eq!(v, (2, 44, 0));
+    }
 
     #[test]
     fn test_parse_worktree_list() {

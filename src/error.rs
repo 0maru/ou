@@ -27,6 +27,9 @@ pub enum OuError {
     #[error("config error: {0}")]
     Config(String),
 
+    #[error("git version {found} is too old (requires {required}+)")]
+    GitVersionTooOld { required: String, found: String },
+
     #[error("git error: {0}")]
     Git(String),
 

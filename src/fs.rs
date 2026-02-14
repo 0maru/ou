@@ -207,10 +207,10 @@ pub mod mock {
             let files = self.files.lock().unwrap();
             let mut results = Vec::new();
             for path in files.keys() {
-                if let Ok(relative) = path.strip_prefix(dir) {
-                    if matcher.is_match(relative) {
-                        results.push(path.clone());
-                    }
+                if let Ok(relative) = path.strip_prefix(dir)
+                    && matcher.is_match(relative)
+                {
+                    results.push(path.clone());
                 }
             }
             Ok(results)

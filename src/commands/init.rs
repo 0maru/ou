@@ -19,10 +19,7 @@ use crate::git::runner::GitRunner;
 /// Locates the repository root, checks that `.ou/settings.toml` does not already
 /// exist, detects the default branch name, then writes the config template and
 /// `.gitignore`.
-pub fn run<E: GitExecutor>(
-    git: &GitRunner<E>,
-    fs: &dyn FileSystem,
-) -> Result<String, OuError> {
+pub fn run<E: GitExecutor>(git: &GitRunner<E>, fs: &dyn FileSystem) -> Result<String, OuError> {
     let repo_root = git.get_toplevel()?;
     let settings_dir = repo_root.join(config::SETTINGS_DIR);
     let settings_path = settings_dir.join(config::SETTINGS_FILE);
@@ -40,7 +37,10 @@ pub fn run<E: GitExecutor>(
 
     let template = Config::default_toml()
         .replace("{repo_name}", &repo_name)
-        .replace("default_source = \"main\"", &format!("default_source = \"{default_branch}\""));
+        .replace(
+            "default_source = \"main\"",
+            &format!("default_source = \"{default_branch}\""),
+        );
 
     fs.mkdir_all(&settings_dir)?;
     fs.write(&settings_path, &template)?;

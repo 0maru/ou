@@ -18,11 +18,25 @@ use crate::fs::OsFileSystem;
 use crate::git::executor::OsGitExecutor;
 use crate::git::runner::GitRunner;
 
+const MIN_GIT_VERSION: (u32, u32, u32) = (2, 17, 0);
+
 fn main() -> Result<()> {
     let cli = Cli::parse();
     let fs = OsFileSystem;
     let cwd = std::env::current_dir().context("failed to get current directory")?;
     let git = GitRunner::new(OsGitExecutor, cwd.clone());
+
+    let (major, minor, patch) = git.git_version().context("failed to detect git version")?;
+    if (major, minor, patch) < MIN_GIT_VERSION {
+        return Err(crate::error::OuError::GitVersionTooOld {
+            required: format!(
+                "{}.{}.{}",
+                MIN_GIT_VERSION.0, MIN_GIT_VERSION.1, MIN_GIT_VERSION.2
+            ),
+            found: format!("{major}.{minor}.{patch}"),
+        }
+        .into());
+    }
 
     match cli.command {
         Commands::Init => {

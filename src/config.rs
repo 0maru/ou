@@ -49,21 +49,23 @@ impl Config {
         let local_path = settings_dir.join(SETTINGS_LOCAL_FILE);
 
         let base = if fs.exists(&settings_path) {
-            let content = fs
-                .read_to_string(&settings_path)
-                .map_err(|e| OuError::Config(format!("failed to read {}: {e}", settings_path.display())))?;
-            toml::from_str::<Config>(&content)
-                .map_err(|e| OuError::Config(format!("failed to parse {}: {e}", settings_path.display())))?
+            let content = fs.read_to_string(&settings_path).map_err(|e| {
+                OuError::Config(format!("failed to read {}: {e}", settings_path.display()))
+            })?;
+            toml::from_str::<Config>(&content).map_err(|e| {
+                OuError::Config(format!("failed to parse {}: {e}", settings_path.display()))
+            })?
         } else {
             Config::default()
         };
 
         if fs.exists(&local_path) {
-            let content = fs
-                .read_to_string(&local_path)
-                .map_err(|e| OuError::Config(format!("failed to read {}: {e}", local_path.display())))?;
-            let local: Config = toml::from_str(&content)
-                .map_err(|e| OuError::Config(format!("failed to parse {}: {e}", local_path.display())))?;
+            let content = fs.read_to_string(&local_path).map_err(|e| {
+                OuError::Config(format!("failed to read {}: {e}", local_path.display()))
+            })?;
+            let local: Config = toml::from_str(&content).map_err(|e| {
+                OuError::Config(format!("failed to parse {}: {e}", local_path.display()))
+            })?;
             Ok(base.merge(local))
         } else {
             Ok(base)
@@ -362,10 +364,7 @@ symlinks = [".env"]
             .with_dir(PathBuf::from("/repo/.ou"))
             .with_file(PathBuf::from("/repo/.ou/settings.toml"), toml_content);
         let cfg = Config::load(Path::new("/repo"), &fs).unwrap();
-        assert_eq!(
-            cfg.worktree_destination_base_dir,
-            Some("../wt".to_string())
-        );
+        assert_eq!(cfg.worktree_destination_base_dir, Some("../wt".to_string()));
         assert_eq!(cfg.default_source, Some("develop".to_string()));
         assert_eq!(cfg.symlinks, vec![".env".to_string()]);
     }
@@ -402,10 +401,7 @@ extra_symlinks = ["b"]
         );
         assert_eq!(cfg.default_source, Some("main".to_string()));
         assert_eq!(cfg.symlinks, vec![".env".to_string()]);
-        assert_eq!(
-            cfg.extra_symlinks,
-            vec!["a".to_string(), "b".to_string()]
-        );
+        assert_eq!(cfg.extra_symlinks, vec!["a".to_string(), "b".to_string()]);
     }
 
     #[test]

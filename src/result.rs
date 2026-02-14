@@ -27,12 +27,17 @@ impl fmt::Display for FormatResult {
                         if i > 0 {
                             write!(f, "  ")?;
                         }
-                        write!(f, "{:width$}", cell, width = widths.get(i).copied().unwrap_or(0))?;
+                        write!(
+                            f,
+                            "{:width$}",
+                            cell,
+                            width = widths.get(i).copied().unwrap_or(0)
+                        )?;
                     }
                     writeln!(f)?;
                 }
                 Ok(())
             }
-}
+        }
     }
 }

@@ -72,10 +72,10 @@ pub fn run<E: GitExecutor>(
             eprintln!("Synced {branch}: {}", created.join(", "));
         }
 
-        if config.init_submodules {
-            if let Err(e) = git.init_submodules(&wt.path) {
-                eprintln!("Warning: submodule init failed for {branch}: {e}");
-            }
+        if config.init_submodules
+            && let Err(e) = git.init_submodules(&wt.path)
+        {
+            eprintln!("Warning: submodule init failed for {branch}: {e}");
         }
 
         synced.push(branch.to_string());
