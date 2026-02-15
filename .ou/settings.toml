@@ -1,0 +1,10 @@
+worktree_destination_base_dir = "../ou-worktrees"
+default_source = "main"
+symlinks = [".env", ".envrc", ".tool-versions"]
+extra_symlinks = []
+init_submodules = false
+submodule_reference = false
+
+[wezterm]
+auto_open = false
+tab_title_template = "{name}"
