@@ -4,33 +4,81 @@ Git worktree 管理 CLI ツール。worktree の作成・削除・同期・WezTe
 
 ## インストール
 
+### Homebrew
+
+```bash
+brew tap 0maru/formulae
+brew install ou
+```
+
+### ソースからビルド
+
 ```bash
 cargo install --path .
 ```
 
 ## 使い方
 
-```bash
-ou init                              # .ou/settings.toml を初期化
-ou add <name>                        # worktree + ブランチ + symlink を一括作成
-    --source <branch>                # ベースブランチ（デフォルト: 設定値）
-    --carry                          # 未コミット変更をstash経由で移動
-    --lock                           # 新worktreeをロック
-    --reason <text>                  # ロック理由
-    --init-submodules                # サブモジュール初期化
-ou list                              # worktree一覧表示
-    --quiet / -q                     # パスのみ出力（fzf等へのパイプ用）
-ou remove <branch>...                # worktreeとブランチを削除
-    -f                               # 強制: 未コミット変更があっても削除
-    -ff                              # 強制: ロック中でも削除
-ou clean                             # マージ済み/upstream-goneを一括削除
-    --check                          # ドライラン
-ou sync                              # symlinkとサブモジュールを同期
-    --all                            # 全worktreeに同期
-    --source <worktree>              # 同期元worktree
-ou open                              # worktree選択 → WezTermタブで開く
-ou dashboard                         # TUIダッシュボード起動
-```
+### `ou init`
+
+`.ou/settings.toml` を初期化する。
+
+### `ou add <name>`
+
+worktree + ブランチ + symlink を一括作成する。
+
+| オプション | 説明 |
+|---|---|
+| `--source <branch>` | ベースブランチ（デフォルト: 設定値） |
+| `--carry` | 未コミット変更を stash 経由で移動 |
+| `--sync` | 未コミット変更を両 worktree にコピー |
+| `--file <path>` | carry/sync の対象ファイルを限定（複数指定可） |
+| `--lock` | 新 worktree をロック |
+| `--reason <text>` | ロック理由 |
+| `--init-submodules` | サブモジュール初期化 |
+| `--submodule-reference` | サブモジュール参照モードを使用 |
+
+### `ou list`
+
+worktree 一覧を表示する。
+
+| オプション | 説明 |
+|---|---|
+| `-q`, `--quiet` | パスのみ出力（fzf 等へのパイプ用） |
+
+### `ou remove <branch>...`
+
+worktree とブランチを削除する。
+
+| オプション | 説明 |
+|---|---|
+| `-f` | 未コミット変更があっても削除 |
+| `-ff` | ロック中でも削除 |
+
+### `ou clean`
+
+マージ済み/upstream-gone の worktree を一括削除する。
+
+| オプション | 説明 |
+|---|---|
+| `--check` | ドライラン |
+
+### `ou sync`
+
+symlink とサブモジュールを同期する。
+
+| オプション | 説明 |
+|---|---|
+| `--all` | 全 worktree に同期 |
+| `--source <worktree>` | 同期元 worktree |
+
+### `ou open`
+
+worktree を選択して WezTerm タブで開く。
+
+### `ou dashboard`
+
+TUI ダッシュボードを起動する。
 
 ## 設定
 
