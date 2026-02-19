@@ -75,8 +75,10 @@ impl<E: GitExecutor> GitRunner<E> {
     ) -> Result<(), OuError> {
         let path_str = path.to_string_lossy().to_string();
         let mut args = vec!["worktree", "add", "-b", branch, &path_str];
+        let qualified;
         if let Some(src) = source {
-            args.push(src);
+            qualified = qualify_branch_ref(src);
+            args.push(&qualified);
         }
         self.run_ok(&args)?;
         Ok(())
@@ -125,7 +127,9 @@ impl<E: GitExecutor> GitRunner<E> {
     }
 
     pub fn is_branch_merged(&self, branch: &str, target: &str) -> Result<MergeStatus, OuError> {
-        let output = self.run(&["merge-base", "--is-ancestor", branch, target])?;
+        let q_branch = qualify_branch_ref(branch);
+        let q_target = qualify_branch_ref(target);
+        let output = self.run(&["merge-base", "--is-ancestor", &q_branch, &q_target])?;
         if output.success() {
             Ok(MergeStatus::Merged)
         } else {
@@ -183,13 +187,22 @@ impl<E: GitExecutor> GitRunner<E> {
         }
 
         for candidate in &["main", "master"] {
-            let check = self.run(&["rev-parse", "--verify", candidate]);
+            let qualified = format!("refs/heads/{candidate}");
+            let check = self.run(&["rev-parse", "--verify", &qualified]);
             if check.is_ok_and(|o| o.success()) {
                 return Ok(candidate.to_string());
             }
         }
 
         Ok("main".to_string())
+    }
+}
+
+fn qualify_branch_ref(name: &str) -> String {
+    if name.starts_with("refs/") {
+        name.to_string()
+    } else {
+        format!("refs/heads/{name}")
     }
 }
 
