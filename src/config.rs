@@ -31,6 +31,9 @@ pub struct Config {
 
     #[serde(default)]
     pub wezterm: Option<WeztermConfig>,
+
+    #[serde(default)]
+    pub hooks: Option<HooksConfig>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -40,6 +43,12 @@ pub struct WeztermConfig {
 
     #[serde(default)]
     pub tab_title_template: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct HooksConfig {
+    #[serde(default)]
+    pub post_add: Vec<String>,
 }
 
 impl Config {
@@ -97,7 +106,17 @@ impl Config {
         if local.wezterm.is_some() {
             self.wezterm = local.wezterm;
         }
+        if local.hooks.is_some() {
+            self.hooks = local.hooks;
+        }
         self
+    }
+
+    pub fn post_add_hooks(&self) -> &[String] {
+        self.hooks
+            .as_ref()
+            .map(|h| h.post_add.as_slice())
+            .unwrap_or(&[])
     }
 
     pub fn all_symlinks(&self) -> Vec<String> {
@@ -138,6 +157,9 @@ submodule_reference = false
 [wezterm]
 auto_open = false
 tab_title_template = "{name}"
+
+[hooks]
+post_add = []
 "#
         .to_string()
     }
@@ -160,6 +182,9 @@ mod tests {
             wezterm: Some(WeztermConfig {
                 auto_open: true,
                 tab_title_template: Some("base-tmpl".to_string()),
+            }),
+            hooks: Some(HooksConfig {
+                post_add: vec!["echo base".to_string()],
             }),
         }
     }
@@ -411,5 +436,59 @@ extra_symlinks = ["b"]
             OuError::Config(msg) => assert!(msg.contains("failed to parse")),
             other => panic!("expected OuError::Config, got: {other:?}"),
         }
+    }
+
+    #[test]
+    fn test_post_add_hooks_none() {
+        let cfg = Config::default();
+        assert!(cfg.post_add_hooks().is_empty());
+    }
+
+    #[test]
+    fn test_post_add_hooks_some() {
+        let cfg = Config {
+            hooks: Some(HooksConfig {
+                post_add: vec!["echo hello".to_string(), "echo world".to_string()],
+            }),
+            ..Config::default()
+        };
+        assert_eq!(cfg.post_add_hooks(), &["echo hello", "echo world"]);
+    }
+
+    #[test]
+    fn test_merge_hooks_override() {
+        let base = base_config();
+        let local = Config {
+            hooks: Some(HooksConfig {
+                post_add: vec!["echo local".to_string()],
+            }),
+            ..Config::default()
+        };
+        let merged = base.merge(local);
+        assert_eq!(merged.post_add_hooks(), &["echo local"]);
+    }
+
+    #[test]
+    fn test_merge_hooks_none_no_override() {
+        let base = base_config();
+        let local = Config::default();
+        let merged = base.merge(local);
+        assert_eq!(merged.post_add_hooks(), &["echo base"]);
+    }
+
+    #[test]
+    fn test_load_with_hooks() {
+        let toml_content = r#"
+[hooks]
+post_add = ["echo {worktree_path}", "touch {worktree_path}/marker"]
+"#;
+        let fs = MockFileSystem::new()
+            .with_dir(PathBuf::from("/repo/.ou"))
+            .with_file(PathBuf::from("/repo/.ou/settings.toml"), toml_content);
+        let cfg = Config::load(Path::new("/repo"), &fs).unwrap();
+        assert_eq!(
+            cfg.post_add_hooks(),
+            &["echo {worktree_path}", "touch {worktree_path}/marker"]
+        );
     }
 }
