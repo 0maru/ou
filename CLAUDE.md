@@ -13,7 +13,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 cargo build                        # ビルド
 cargo test                         # 全テスト実行（ユニット + インテグレーション）
-cargo test --lib                   # ユニットテストのみ
 cargo test --test integration_test # 特定のインテグレーションテストファイル
 cargo test test_merge_             # テスト名のパターンマッチで実行
 cargo fmt --all -- --check         # フォーマットチェック
@@ -21,6 +20,8 @@ cargo fmt --all                    # フォーマット適用
 cargo clippy --all-targets --all-features -- -D warnings  # lint
 cargo install --path .             # ローカルインストール
 ```
+
+**注意**: `cargo test --lib` はライブラリターゲットがない（バイナリクレートのみ）ため使用不可。ユニットテストも `cargo test` で実行される。
 
 ## コミットメッセージ
 
