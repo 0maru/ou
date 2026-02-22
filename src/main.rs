@@ -4,6 +4,7 @@ mod config;
 mod error;
 mod fs;
 mod git;
+mod hooks;
 mod multiplexer;
 mod result;
 mod symlink;

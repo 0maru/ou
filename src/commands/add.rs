@@ -14,6 +14,7 @@ use crate::error::OuError;
 use crate::fs::FileSystem;
 use crate::git::executor::GitExecutor;
 use crate::git::runner::GitRunner;
+use crate::hooks::{self, HookContext};
 use crate::multiplexer;
 use crate::symlink;
 
@@ -88,6 +89,7 @@ pub fn run<E: GitExecutor>(
     // Auto-open in WezTerm if configured: spawns a new tab at the worktree path
     // with a title derived from the config template.
     let auto_open = config.wezterm.as_ref().is_some_and(|c| c.auto_open);
+    let mut pane_id = String::new();
 
     if auto_open && let Some(mux) = multiplexer::detect_multiplexer() {
         let title = config
@@ -98,12 +100,29 @@ pub fn run<E: GitExecutor>(
             .unwrap_or_else(|| args.name.clone());
 
         match mux.open_tab(&wt_path, Some(&title)) {
-            Ok(pane_id) => {
-                msg.push_str(&format!(" (opened in {} pane {})", mux.name(), pane_id));
+            Ok(id) => {
+                msg.push_str(&format!(" (opened in {} pane {})", mux.name(), id));
+                pane_id = id;
             }
             Err(e) => {
                 eprintln!("Warning: failed to open tab: {e}");
             }
+        }
+    }
+
+    // Run post_add hooks
+    let hook_commands = config.post_add_hooks();
+    if !hook_commands.is_empty() {
+        let ctx = HookContext::new()
+            .set("worktree_path", &wt_path.to_string_lossy())
+            .set("branch_name", &args.name)
+            .set("worktree_name", &wt_name)
+            .set("source_branch", source)
+            .set("pane_id", &pane_id)
+            .set("repo_root", &repo_root.to_string_lossy());
+        let warnings = hooks::run_hooks(hook_commands, &ctx);
+        if !warnings.is_empty() {
+            msg.push_str(&format!(" ({} hook warning(s))", warnings.len()));
         }
     }
 
