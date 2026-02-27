@@ -30,8 +30,14 @@ impl HookContext {
 /// Run hook commands sequentially. Returns a list of warning messages for failed commands.
 pub fn run_hooks(commands: &[String], ctx: &HookContext) -> Vec<String> {
     let mut warnings = Vec::new();
-    for cmd in commands {
+    let total = commands.len();
+    for (i, cmd) in commands.iter().enumerate() {
         let rendered = ctx.render(cmd);
+        if total == 1 {
+            eprintln!("Running hook: {rendered}");
+        } else {
+            eprintln!("Running hook [{}/{}]: {rendered}", i + 1, total);
+        }
         match Command::new("sh").arg("-c").arg(&rendered).status() {
             Ok(status) if status.success() => {}
             Ok(status) => {
