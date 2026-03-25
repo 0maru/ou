@@ -161,10 +161,7 @@ fn test_add_with_symlinks() {
         .assert()
         .success();
 
-    let wt_dir = path
-        .join(".ou")
-        .join("worktrees")
-        .join("feat-symlink-test");
+    let wt_dir = path.join(".ou").join("worktrees").join("feat-symlink-test");
 
     let env_link = wt_dir.join(".env");
     assert!(
