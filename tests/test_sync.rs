@@ -33,7 +33,7 @@ fn test_sync_all_syncs_worktrees() {
         .success()
         .stdout(predicate::str::contains("Synced:"));
 
-    let wt_base = path.join(".git").join("ou-worktrees");
+    let wt_base = path.join(".ou").join("worktrees");
 
     let env_a = wt_base.join("feat-sync-a").join(".env");
     let env_b = wt_base.join("feat-sync-b").join(".env");
@@ -78,7 +78,7 @@ fn test_sync_recreates_deleted_symlinks() {
         .assert()
         .success();
 
-    let wt_dir = path.join(".git").join("ou-worktrees").join("feat-resync");
+    let wt_dir = path.join(".ou").join("worktrees").join("feat-resync");
     let env_link = wt_dir.join(".env");
 
     assert!(

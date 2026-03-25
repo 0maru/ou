@@ -31,7 +31,7 @@ post_add = ["touch {worktree_path}/hook-marker"]
         ));
 
     // Verify the marker file was created by the hook
-    let git_dir = path.join(".git/ou-worktrees/feat-hook-test");
+    let git_dir = path.join(".ou/worktrees/feat-hook-test");
     assert!(
         git_dir.join("hook-marker").exists(),
         "hook should have created marker file"
@@ -60,7 +60,7 @@ post_add = ["echo branch={branch_name} wt_name={worktree_name} source={source_br
         .assert()
         .success();
 
-    let wt_dir = path.join(".git/ou-worktrees/feat-vars-test");
+    let wt_dir = path.join(".ou/worktrees/feat-vars-test");
     let content = std::fs::read_to_string(wt_dir.join("vars.txt")).unwrap();
     assert!(
         content.contains("branch=feat/vars-test"),
@@ -149,7 +149,7 @@ post_add = [
         .assert()
         .success();
 
-    let wt_dir = path.join(".git/ou-worktrees/feat-seq-test");
+    let wt_dir = path.join(".ou/worktrees/feat-seq-test");
     assert!(
         wt_dir.join("hook-dir/nested-marker").exists(),
         "sequential hooks should create nested structure"
