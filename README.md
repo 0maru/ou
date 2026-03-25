@@ -1,6 +1,18 @@
 # ou
 
+[![CI](https://github.com/0maru/ou/actions/workflows/ci.yml/badge.svg)](https://github.com/0maru/ou/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 Git worktree 管理 CLI ツール。worktree の作成・削除・同期・WezTerm 連携を1コマンドに集約します。
+
+## 特徴
+
+- worktree + ブランチ + symlink を一括作成
+- 未コミット変更の carry / sync
+- マージ済み worktree の一括クリーンアップ
+- symlink / サブモジュールの自動同期
+- post_add フックによるカスタムコマンド実行
+- WezTerm タブ連携 & TUI ダッシュボード
 
 ## インストール
 
@@ -17,11 +29,27 @@ brew install ou
 cargo install --path .
 ```
 
-## 使い方
+## クイックスタート
+
+```bash
+# 1. リポジトリで初期化
+ou init
+
+# 2. worktree を作成
+ou add feat/my-feature
+
+# 3. 一覧表示
+ou list
+
+# 4. マージ済みを一括削除
+ou clean
+```
+
+## コマンド
 
 ### `ou init`
 
-`.ou/settings.toml` を初期化する。
+`.ou/settings.toml` を初期化する。リポジトリのデフォルトブランチが `default_source` に自動設定される。
 
 ### `ou add <name>`
 
@@ -80,6 +108,14 @@ worktree を選択して WezTerm タブで開く。
 
 TUI ダッシュボードを起動する。
 
+| キー | 操作 |
+|---|---|
+| `j` / `k` | ナビゲーション |
+| `Enter` | WezTerm タブで開く |
+| `d` | worktree 削除 |
+| `r` | リフレッシュ |
+| `q` | 終了 |
+
 ## 設定
 
 `ou init` で `.ou/settings.toml` が生成される。
@@ -87,55 +123,39 @@ TUI ダッシュボードを起動する。
 
 ### 設定項目
 
-#### `worktree_destination_base_dir`
-
-- **型**: string（任意）
-- **デフォルト**: `"../{リポジトリ名}-worktrees"`
-- worktree の作成先ディレクトリ。相対パスはリポジトリルート基準で解決される。未指定時はリポジトリの親ディレクトリに `{リポジトリ名}-worktrees` を自動作成。
-
-#### `default_source`
-
-- **型**: string（任意）
-- **デフォルト**: `"main"`
-- `ou add` で新しい worktree を作る際のベースブランチ。`--source` オプションで上書き可能。`ou init` 実行時にリポジトリのデフォルトブランチが自動設定される。
-
-#### `symlinks`
-
-- **型**: string の配列
-- **デフォルト**: `[".env", ".envrc", ".tool-versions"]`
-- worktree 作成時に元リポジトリからシンボリックリンクを張るファイル。glob パターン対応。`settings.local.toml` で指定した場合は完全に上書きされる。
-
-#### `extra_symlinks`
-
-- **型**: string の配列
-- **デフォルト**: `[]`
-- `symlinks` に追加するシンボリックリンク。glob パターン対応。`settings.local.toml` の値はベース設定とマージされ、重複は自動排除される。
-
-#### `init_submodules`
-
-- **型**: bool
-- **デフォルト**: `false`
-- worktree 作成時にサブモジュールを自動初期化するか。`ou add --init-submodules` でコマンド実行時にも指定可能。
-
-#### `submodule_reference`
-
-- **型**: bool
-- **デフォルト**: `false`
-- サブモジュール初期化時に参照モード（`--reference`）を使用するか。
+| キー | 型 | デフォルト | 説明 |
+|---|---|---|---|
+| `worktree_destination_base_dir` | string? | `なし` | worktree の作成先ディレクトリ。未指定時は `.ou/worktrees` |
+| `default_source` | string? | `"main"` | `ou add` のベースブランチ |
+| `symlinks` | string[] | `[".env", ".envrc", ".tool-versions"]` | worktree 作成時にシンボリックリンクを張るファイル（glob 対応） |
+| `extra_symlinks` | string[] | `[]` | `symlinks` に追加するリンク（glob 対応、マージ時に重複排除） |
+| `init_submodules` | bool | `false` | worktree 作成時にサブモジュールを自動初期化 |
+| `submodule_reference` | bool | `false` | サブモジュール初期化時に参照モードを使用 |
 
 #### `[wezterm]` セクション
 
-##### `auto_open`
+| キー | 型 | デフォルト | 説明 |
+|---|---|---|---|
+| `auto_open` | bool | `false` | `ou add` 後に自動的に WezTerm タブで開く |
+| `tab_title_template` | string? | `"{name}"` | タブタイトルテンプレート（`{name}` がブランチ名に置換） |
 
-- **型**: bool
-- **デフォルト**: `false`
-- `ou add` で worktree 作成後、自動的に WezTerm の新しいタブで開くか。WezTerm 内で実行時のみ有効。
+#### `[hooks]` セクション
 
-##### `tab_title_template`
+| キー | 型 | デフォルト | 説明 |
+|---|---|---|---|
+| `post_add` | string[] | `[]` | `ou add` 完了後に実行するコマンド |
 
-- **型**: string（任意）
-- **デフォルト**: `"{name}"`
-- WezTerm タブのタイトルテンプレート。`{name}` がブランチ名に置換される。
+`post_add` フックでは以下のプレースホルダが使用可能:
+
+- `{worktree_path}` — 作成された worktree のパス
+
+```toml
+[hooks]
+post_add = [
+  "echo {worktree_path}",
+  "touch {worktree_path}/.ready",
+]
+```
 
 ### 設定例（完全版）
 
@@ -150,6 +170,9 @@ submodule_reference = false
 [wezterm]
 auto_open = false
 tab_title_template = "{name}"
+
+[hooks]
+post_add = []
 ```
 
 ### ローカル設定
@@ -157,11 +180,15 @@ tab_title_template = "{name}"
 `.ou/settings.local.toml` は `.gitignore` に含まれ、個人環境固有の設定を記述する。スキーマは `settings.toml` と同一。
 
 マージルール:
-- **スカラー値**（`worktree_destination_base_dir`, `default_source`）: local に値があれば上書き
-- **`symlinks`**: local に指定があれば完全に置き換え
-- **`extra_symlinks`**: ベース設定とマージされ、重複は自動排除
-- **`init_submodules` / `submodule_reference`**: local で `true` にすると有効化（`false` では上書きされない）
-- **`[wezterm]`**: local に指定があればセクションごと置き換え
+
+| 設定 | ルール |
+|---|---|
+| スカラー値（`worktree_destination_base_dir`, `default_source`） | local に値があれば上書き |
+| `symlinks` | local に指定があれば完全に置き換え |
+| `extra_symlinks` | ベース設定とマージ（重複自動排除） |
+| `init_submodules` / `submodule_reference` | local で `true` にすると有効化（`false` では上書きされない） |
+| `[wezterm]` | local に指定があればセクションごと置き換え |
+| `[hooks]` | local に指定があればセクションごと置き換え |
 
 ```toml
 # .ou/settings.local.toml の例
@@ -172,12 +199,6 @@ init_submodules = true
 auto_open = true
 ```
 
-## ダッシュボード
+## ライセンス
 
-`ou dashboard` で TUI を起動:
-
-- `j`/`k`: ナビゲーション
-- `Enter`: WezTerm タブで開く
-- `d`: worktree 削除
-- `r`: リフレッシュ
-- `q`: 終了
+[MIT](LICENSE)
