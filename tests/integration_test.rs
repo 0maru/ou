@@ -162,8 +162,8 @@ fn test_add_with_symlinks() {
         .success();
 
     let wt_dir = path
-        .join(".git")
-        .join("ou-worktrees")
+        .join(".ou")
+        .join("worktrees")
         .join("feat-symlink-test");
 
     let env_link = wt_dir.join(".env");

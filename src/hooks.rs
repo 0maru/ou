@@ -65,11 +65,11 @@ mod tests {
     #[test]
     fn test_render_basic() {
         let ctx = HookContext::new()
-            .set("worktree_path", "/repo/.git/ou-worktrees/feat-login")
+            .set("worktree_path", "/repo/.ou/worktrees/feat-login")
             .set("branch_name", "feat/login");
         assert_eq!(
             ctx.render("echo {worktree_path}"),
-            "echo /repo/.git/ou-worktrees/feat-login"
+            "echo /repo/.ou/worktrees/feat-login"
         );
         assert_eq!(
             ctx.render("git checkout {branch_name}"),
